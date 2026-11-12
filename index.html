@@ -54,18 +54,27 @@ aside h2:first-child{margin-top:0}
 @media (max-width:900px){.layout{grid-template-columns:1fr}aside{display:none;position:static;max-height:none}body.fo aside{display:block}#fbtn{display:inline-block}.list .row{grid-template-columns:44px 1fr 90px}.list .row .b,.list .row .tg,.list .row .pt{display:none}}
 
 .card,.row{position:relative}.ov{position:absolute;inset:0;z-index:1;border-radius:inherit}.card:hover,.row:hover{border-color:var(--accent)}.card:focus-within{outline:2px solid var(--accent)}.ov:focus-visible{outline:2px solid var(--accent)}.was{font-weight:400;color:var(--muted);font-size:12.5px}
-</style></head><body><header><h1>Chase Shops Catalog</h1><button id="fbtn">Filters</button><input id="q" type="search" placeholder="Search brand or product, e.g. cuisinart pan"><span class="pr">$<input id="min" type="number" min="0" placeholder="Min"> to <input id="max" type="number" min="0" placeholder="Max"></span><select id="sort"><option value="rec">Sort: Recommended</option><option value="pl">Price: low to high</option><option value="ph">Price: high to low</option><option value="az">Name A-Z</option><option value="br">Brand A-Z</option></select><button id="view">List view</button></header><div class="layout"><aside></aside><main><div class="bar" id="status"></div><div id="grid" class="grid"></div><div id="more"></div></main></div><div class="foot">Unofficial, independent catalog of items listed at shopping.chase.com. Data captured <span id="cap"></span>. Prices, points and availability change; check Chase before buying. Not affiliated with or endorsed by JPMorgan Chase. Photos and product details belong to their owners. Click any item to open it on Chase (may require signing in).</div><script>var BASE='https://maxsite.b-cdn.net/';
+.asof{color:var(--muted);font-size:13px;white-space:nowrap}
+.chg{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.chgl{color:var(--muted);font-size:13px}
+.chgb{border-radius:99px;padding:4px 12px;font-size:13px}.chgb.on{background:var(--accentbg);color:var(--accent);border-color:var(--accent)}.chgb:disabled{opacity:.45;cursor:default}
+.badge{position:absolute;top:8px;left:8px;z-index:2;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--ink);pointer-events:none}
+.badge.new{background:var(--accent);color:var(--bg)}.badge.down{background:#1f7a4d;color:#fff}.badge.up{background:#b3541e;color:#fff}
+.row .badge{top:4px;left:54px}
+</style></head><body><header><h1>Chase Shops Catalog</h1><span id="asof" class="asof"></span><button id="fbtn">Filters</button><input id="q" type="search" placeholder="Search brand or product, e.g. cuisinart pan"><span class="pr">$<input id="min" type="number" min="0" placeholder="Min"> to <input id="max" type="number" min="0" placeholder="Max"></span><select id="sort"><option value="rec">Sort: Recommended</option><option value="pl">Price: low to high</option><option value="ph">Price: high to low</option><option value="az">Name A-Z</option><option value="br">Brand A-Z</option></select><button id="view">List view</button></header><div class="layout"><aside></aside><main><div class="chg" id="chg" hidden></div><div class="bar" id="status"></div><div id="grid" class="grid"></div><div id="more"></div></main></div><div class="foot">Unofficial, independent catalog of items listed at shopping.chase.com. Data captured <span id="cap"></span>. Prices, points and availability change; check Chase before buying. Not affiliated with or endorsed by JPMorgan Chase. Photos and product details belong to their owners. Click any item to open it on Chase (may require signing in).</div><script>var BASE='https://maxsite.b-cdn.net/';
 var ORDER=['Apple','Electronics','Fashion & Beauty','Jewelry & Watches','Home & Office','Kitchen & Tabletop','Outdoors','Sports & Fitness','Travel'];
 var items=[],CAPTURED='';
 function chaseUrl(it){return 'https://shopping.chase.com/products/'+it.id+'?productId='+it.id+'&brandId='+it.bid}
-var st={q:'',cat:'',sub:'',brands:new Set(),min:null,max:null,sort:'rec',view:'grid',bq:''};
+var gone=[],prevInfo=null;
+var st={chg:'',q:'',cat:'',sub:'',brands:new Set(),min:null,max:null,sort:'rec',view:'grid',bq:''};
 var qt=[];
 function $(s){return document.querySelector(s)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function money(p){return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function src(it){return it.img.indexOf('http')===0?it.img:BASE+it.img}
+function pool(){return st.chg==='gone'?gone:items}
 function match(it,skip){
   skip=skip||[];
+  if(st.chg&&st.chg!=='gone'&&it.flag!==st.chg&&skip.indexOf('chg')<0)return false;
   if(skip.indexOf('q')<0){for(var j=0;j<qt.length;j++){if(it.k.indexOf(qt[j])<0)return false}}
   if(skip.indexOf('cat')<0&&st.cat&&it.c!==st.cat)return false;
   if(skip.indexOf('sub')<0&&st.sub&&it.s!==st.sub)return false;
@@ -81,7 +90,7 @@ function sortFn(){
   return function(a,b){return a.i-b.i}}
 function renderSide(){
   var cc={},sc={},bc={};
-  items.forEach(function(it){
+  pool().forEach(function(it){
     if(match(it,['cat','sub']))cc[it.c]=(cc[it.c]||0)+1;
     if(st.cat&&it.c===st.cat&&match(it,['sub']))sc[it.s]=(sc[it.s]||0)+1;
     if(match(it,['brand']))bc[it.b]=(bc[it.b]||0)+1});
@@ -114,6 +123,8 @@ function card(it){
     el.innerHTML='<div class="img"><img loading="lazy" alt="" src="'+esc(src(it))+'"></div><div class="meta"><div class="b">'+esc(it.b)+'</div><div class="nm" title="'+esc(it.n)+'">'+esc(it.n)+'</div><div class="tg">'+tag+'</div><div class="pc">'+money(it.p)+'<small>or '+it.pt.toLocaleString()+' points</small></div></div>'}
   var im=el.querySelector('img');im.addEventListener('error',function(){var bx=im.closest('.img');if(bx)bx.remove();else im.style.visibility='hidden'});
   var ln=document.createElement('a');ln.className='ov';ln.href=chaseUrl(it);ln.target='_blank';ln.rel='noopener';ln.setAttribute('aria-label','View '+it.n+' on Chase');el.appendChild(ln);
+  if(it.flag){var bd=document.createElement('span');bd.className='badge '+it.flag;
+    bd.textContent=it.flag==='new'?'New':(it.flag==='gone'?'No longer listed':(it.flag==='down'?'Price drop, was '+money(it.was):'Price up, was '+money(it.was)));el.appendChild(bd)}
   return el}
 function more(){
   var g=$('#grid'),end=Math.min(list.length,shownN+PAGE),f=document.createDocumentFragment();
@@ -121,10 +132,11 @@ function more(){
   g.appendChild(f);shownN=end}
 function renderMain(){
   qt=st.q.toLowerCase().split(/\s+/).filter(Boolean);
-  list=items.filter(function(it){return match(it)}).sort(sortFn());
+  list=pool().filter(function(it){return match(it)}).sort(sortFn());
   var g=$('#grid');g.className=st.view==='list'?'list':'grid';g.innerHTML='';shownN=0;
   if(!list.length){g.innerHTML='<div class="empty">No items match these filters.</div>'}else more();
   var c='';
+  if(st.chg)c+='<span class="chip" data-x="chg">'+esc({new:'New',down:'Price drops',up:'Price increases',gone:'No longer listed'}[st.chg])+'</span>';
   if(st.cat)c+='<span class="chip" data-x="cat">'+esc(st.cat)+'</span>';
   if(st.sub)c+='<span class="chip" data-x="sub">'+esc(st.sub)+'</span>';
   st.brands.forEach(function(b){c+='<span class="chip" data-x="brand" data-b="'+esc(b)+'">'+esc(b)+'</span>'});
@@ -148,11 +160,39 @@ $('aside').addEventListener('change',function(e){
 $('aside').addEventListener('input',function(e){if(e.target.id==='bq'){st.bq=e.target.value;renderSide()}});
 $('#status').addEventListener('click',function(e){
   var c=e.target.closest('.chip');if(!c)return;var x=c.getAttribute('data-x');
-  if(x==='cat'){st.cat='';st.sub=''}else if(x==='sub')st.sub='';else if(x==='brand')st.brands.delete(c.getAttribute('data-b'));
+  if(x==='chg')st.chg='';else if(x==='cat'){st.cat='';st.sub=''}else if(x==='sub')st.sub='';else if(x==='brand')st.brands.delete(c.getAttribute('data-b'));
   else if(x==='price'){st.min=st.max=null;$('#min').value='';$('#max').value=''}else if(x==='q'){st.q='';$('#q').value=''}
   all()});
 new IntersectionObserver(function(es){if(es[0].isIntersecting&&shownN<list.length)more()},{rootMargin:'800px'}).observe($('#more'));
 
+function renderChg(){
+  var el=document.getElementById('chg');
+  if(!prevInfo){el.hidden=true;return}
+  var n={new:0,down:0,up:0};items.forEach(function(it){if(it.flag)n[it.flag]++});
+  var defs=[['new','New',n.new],['down','Price drops',n.down],['up','Price increases',n.up],['gone','No longer listed',gone.length]];
+  var h='<span class="chgl">Since '+esc(prevInfo)+':</span>';
+  defs.forEach(function(d){h+='<button class="chgb'+(st.chg===d[0]?' on':'')+'" data-chg="'+d[0]+'"'+(d[2]?'':' disabled')+'>'+d[1]+' <b>'+d[2]+'</b></button>'});
+  el.innerHTML=h;el.hidden=false}
+document.getElementById('chg').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-chg]');if(!b||b.disabled)return;
+  var v=b.getAttribute('data-chg');st.chg=(st.chg===v)?'':v;all();renderChg()});
+var REPO=window.CATALOG_REPO||{owner:location.hostname.split('.')[0],name:location.pathname.split('/')[1]};
+function loadPrev(){
+  var api=window.CATALOG_API||'https://api.github.com';var raw=window.CATALOG_RAW||'https://raw.githubusercontent.com';
+  fetch(api+'/repos/'+REPO.owner+'/'+REPO.name+'/commits?path=catalog.json&per_page=2').then(function(r){return r.json()}).then(function(cs){
+    if(!Array.isArray(cs)||cs.length<2)return;
+    var sha=cs[1].sha;
+    return fetch(raw+'/'+REPO.owner+'/'+REPO.name+'/'+sha+'/catalog.json').then(function(r){return r.json()}).then(function(pd){
+      var pm={};pd.items.forEach(function(r){pm[r.id]=r});
+      var cur={};
+      items.forEach(function(it){cur[it.id]=1;var o=pm[it.id];if(!o){it.flag='new'}else{var op=(o.dp!=null?o.dp:o.p);if(Math.abs(op-it.p)>0.004){it.flag=it.p<op?'down':'up';it.was=op}}});
+      pd.items.forEach(function(r,i){if(!cur[r.id]){var price=(r.dp!=null?r.dp:r.p);gone.push({i:i,id:r.id,bid:r.bid,b:r.b,n:r.n,p:price,pt:Math.floor(price*100),img:r.img,c:(r.b==='Apple'&&r.c1==='Electronics')?'Apple':r.c1,s:r.c2||'Other',k:(r.b+' '+r.n).toLowerCase(),flag:'gone'})}});
+      var dt=pd.captured?new Date(pd.captured+'T12:00:00'):null;
+      prevInfo=dt?dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'last refresh';
+      renderChg();all();
+    });
+  }).catch(function(){});
+}
 fetch('catalog.json').then(function(r){return r.json()}).then(function(d){
   CAPTURED=d.captured||'';
   d.items.forEach(function(r,i){
@@ -161,6 +201,7 @@ fetch('catalog.json').then(function(r){return r.json()}).then(function(d){
     items.push({i:i,id:r.id,bid:r.bid,b:r.b,n:r.n,p:price,list:r.dp!=null?r.p:null,pt:Math.floor(price*100),img:r.img,c:c1,s:r.c2||'Other',k:(r.b+' '+r.n).toLowerCase()});
   });
   var f=document.getElementById('cap');if(f){var dt=CAPTURED?new Date(CAPTURED+'T12:00:00'):null;f.textContent=dt?dt.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):'an earlier date'}
-  all();
+  var as=document.getElementById('asof');if(as&&CAPTURED){as.textContent='Updated '+(new Date(CAPTURED+'T12:00:00')).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+  all();loadPrev();
 }).catch(function(){document.getElementById('grid').innerHTML='<div class="empty">Could not load catalog.json. Open this page from a web server (GitHub Pages), not directly from a file.</div>'});
 </script></body></html>
