@@ -1,5 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chase Shops Catalog (unofficial)</title><meta name="description" content="Searchable, filterable catalog of items listed at The Shops at Chase."><style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chase Shops Catalog (unofficial)</title><meta name="description" content="Searchable, filterable catalog of items listed at The Shops at Chase."><script async src="https://www.googletagmanager.com/gtag/js?id=G-XM32CJ604N"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-XM32CJ604N");</script>
+<style>
 :root{--bg:#f6f5f2;--surface:#fff;--ink:#1c1c1c;--muted:#6b6b66;--line:#e3e1db;--accent:#0b5cad;--accentbg:#e6f0fb;--chip:#eceae4}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141516;--surface:#1e1f21;--ink:#ececea;--muted:#9a9a94;--line:#2e3033;--accent:#7db4f2;--accentbg:#1d2a3a;--chip:#2a2c2f;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#141516;--surface:#1e1f21;--ink:#ececea;--muted:#9a9a94;--line:#2e3033;--accent:#7db4f2;--accentbg:#1d2a3a;--chip:#2a2c2f;color-scheme:dark}
@@ -60,7 +62,8 @@ aside h2:first-child{margin-top:0}
 .badge{position:absolute;top:8px;left:8px;z-index:2;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--ink);pointer-events:none}
 .badge.new{background:var(--accent);color:var(--bg)}.badge.down{background:#1f7a4d;color:#fff}.badge.up{background:#b3541e;color:#fff}
 .row .badge{top:4px;left:54px}
-</style></head><body><header><h1>Chase Shops Catalog</h1><span id="asof" class="asof"></span><button id="fbtn">Filters</button><input id="q" type="search" placeholder="Search brand or product, e.g. cuisinart pan"><span class="pr">$<input id="min" type="number" min="0" placeholder="Min"> to <input id="max" type="number" min="0" placeholder="Max"></span><select id="sort"><option value="rec">Sort: Recommended</option><option value="pl">Price: low to high</option><option value="ph">Price: high to low</option><option value="az">Name A-Z</option><option value="br">Brand A-Z</option></select><button id="view">List view</button></header><div class="layout"><aside></aside><main><div class="chg" id="chg" hidden></div><div class="bar" id="status"></div><div id="grid" class="grid"></div><div id="more"></div></main></div><div class="foot">Unofficial, independent catalog of items listed at shopping.chase.com. Data captured <span id="cap"></span>. Prices, points and availability change; check Chase before buying. Not affiliated with or endorsed by JPMorgan Chase. Photos and product details belong to their owners. Click any item to open it on Chase (may require signing in).</div><script>var BASE='https://maxsite.b-cdn.net/';
+.foot a{color:var(--accent)}
+</style></head><body><header><h1>Chase Shops Catalog</h1><span id="asof" class="asof"></span><button id="fbtn">Filters</button><input id="q" type="search" placeholder="Search brand or product, e.g. cuisinart pan"><span class="pr">$<input id="min" type="number" min="0" placeholder="Min"> to <input id="max" type="number" min="0" placeholder="Max"></span><select id="sort"><option value="rec">Sort: Recommended</option><option value="pl">Price: low to high</option><option value="ph">Price: high to low</option><option value="az">Name A-Z</option><option value="br">Brand A-Z</option></select><button id="view">List view</button></header><div class="layout"><aside></aside><main><div class="chg" id="chg" hidden></div><div class="bar" id="status"></div><div id="grid" class="grid"></div><div id="more"></div></main></div><div class="foot">Unofficial, independent catalog of items listed at shopping.chase.com. Data captured <span id="cap"></span>. Prices, points and availability change; check Chase before buying. Not affiliated with or endorsed by JPMorgan Chase. Photos and product details belong to their owners. Click any item to open it on Chase (may require signing in). Questions, corrections or a missing item? <a href="https://github.com/pjhoberman/chase-shops-catalog/issues" target="_blank" rel="noopener">Open an issue on GitHub</a>. This page uses Google Analytics to count visits and clicks.</div><script>var BASE='https://maxsite.b-cdn.net/';
 var ORDER=['Apple','Electronics','Fashion & Beauty','Jewelry & Watches','Home & Office','Kitchen & Tabletop','Outdoors','Sports & Fitness','Travel'];
 var items=[],CAPTURED='';
 function chaseUrl(it){return 'https://shopping.chase.com/products/'+it.id+'?productId='+it.id+'&brandId='+it.bid}
@@ -122,7 +125,7 @@ function card(it){
     el.className='card';
     el.innerHTML='<div class="img"><img loading="lazy" alt="" src="'+esc(src(it))+'"></div><div class="meta"><div class="b">'+esc(it.b)+'</div><div class="nm" title="'+esc(it.n)+'">'+esc(it.n)+'</div><div class="tg">'+tag+'</div><div class="pc">'+money(it.p)+'<small>or '+it.pt.toLocaleString()+' points</small></div></div>'}
   var im=el.querySelector('img');im.addEventListener('error',function(){var bx=im.closest('.img');if(bx)bx.remove();else im.style.visibility='hidden'});
-  var ln=document.createElement('a');ln.className='ov';ln.href=chaseUrl(it);ln.target='_blank';ln.rel='noopener';ln.setAttribute('aria-label','View '+it.n+' on Chase');el.appendChild(ln);
+  var ln=document.createElement('a');ln.className='ov';ln.href=chaseUrl(it);ln.setAttribute('data-id',it.id);ln.target='_blank';ln.rel='noopener';ln.setAttribute('aria-label','View '+it.n+' on Chase');el.appendChild(ln);
   if(it.flag){var bd=document.createElement('span');bd.className='badge '+it.flag;
     bd.textContent=it.flag==='new'?'New':(it.flag==='gone'?'No longer listed':(it.flag==='down'?'Price drop, was '+money(it.was):'Price up, was '+money(it.was)));el.appendChild(bd)}
   return el}
@@ -165,6 +168,17 @@ $('#status').addEventListener('click',function(e){
   all()});
 new IntersectionObserver(function(es){if(es[0].isIntersecting&&shownN<list.length)more()},{rootMargin:'800px'}).observe($('#more'));
 
+function track(name,params){try{if(window.gtag)gtag('event',name,params||{})}catch(e){}}
+var byId=null;
+function itemById(id){if(!byId){byId={};items.concat(gone).forEach(function(it){byId[it.id]=it})}return byId[id]}
+document.getElementById('grid').addEventListener('click',function(e){
+  var a=e.target.closest('a.ov');if(!a)return;
+  var it=itemById(a.getAttribute('data-id'));if(!it)return;
+  track('select_item',{item_list_name:'Chase catalog',items:[{item_id:String(it.id),item_name:it.n,item_brand:it.b,item_category:it.c,item_category2:it.s,price:it.p}]});
+});
+var qT;document.getElementById('q').addEventListener('input',function(e){clearTimeout(qT);var v=e.target.value.trim();if(v.length<2)return;qT=setTimeout(function(){track('search',{search_term:v.toLowerCase()})},1500)});
+document.querySelector('aside').addEventListener('click',function(e){var b=e.target.closest('button.cat');if(b)track('filter_use',{filter_type:b.getAttribute('data-sub')?'subcategory':'category',filter_value:(b.getAttribute('data-cat')||'All')+(b.getAttribute('data-sub')?' > '+b.getAttribute('data-sub'):'')})});
+document.querySelector('aside').addEventListener('change',function(e){var b=e.target.getAttribute('data-brand');if(b&&e.target.checked)track('filter_use',{filter_type:'brand',filter_value:b})});
 function renderChg(){
   var el=document.getElementById('chg');
   if(!prevInfo){el.hidden=true;return}
